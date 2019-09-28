@@ -1,600 +1,639 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import './Header.css';
-import { withStyles } from '@material-ui/core/styles';
-import FastFoodIcon from '@material-ui/icons/Fastfood'
-import Input from '@material-ui/core/Input';
-import InputAdornment from '@material-ui/core/InputAdornment';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import {withStyles} from '@material-ui/core/styles';
 import SearchIcon from '@material-ui/icons/Search';
+import IconButton from '@material-ui/core/IconButton';
+import MenuItem from '@material-ui/core/MenuItem';
+import Popover from '@material-ui/core/Popover';
+import FastFoodIcon from '@material-ui/icons/Fastfood';
+import AccountCircle from '@material-ui/icons/AccountCircle';
 import Button from '@material-ui/core/Button';
-import AccountCircleIcon from '@material-ui/icons/AccountCircle'
 import Modal from 'react-modal';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import FormControl from '@material-ui/core/FormControl';
+import Input from '@material-ui/core/Input';
 import InputLabel from '@material-ui/core/InputLabel';
-import PropTypes from 'prop-types';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import Snackbar from '@material-ui/core/Snackbar';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import { Link } from 'react-router-dom';
+import InputAdornment from '@material-ui/core/InputAdornment';
+import base64 from 'base-64';
 
-const loginModalStyle = {
-    content: {
-        top: '50%',
-        left: '50%',
-        right: 'auto',
-        bottom: 'auto',
-        marginRight: '-50%',
-        transform: 'translate(-50%, -50%)'
-    }
+const customStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    width:'20%' ,
+    bottom: 'auto',
+    padding: '60px' ,
+    transform: 'translate(-50%, -50%)'
+  }
 };
 
+const TabContainer = function(props) {
+  return (<Typography component="div" style={{
+      padding: 0,
+      textAlign: 'center'
+    }}>
+    {props.children}
+  </Typography>)
+}
+
 const styles = theme => ({
-    searchUnderline: {
-        '&:after': {
-            borderBottomColor: 'white',
-        },
+  tabContainer:{
+    display:'flex',
+    flexDirection:'column',
+  },
+  toolbar: {
+    display:'flex',
+    [theme.breakpoints.down('xs')]:{
+      flexDirection:'column',
+      justifyContent:'space-between',
+      alignItems:'flex-start',
     },
-});
-
-const TabContainer = function (props) {
-    return (
-        <Typography component='div' style={{padding: 0, textAlign: 'center'}}>
-            {props.children}
-        </Typography>
-    )
-}
-
-TabContainer.propTypes = {
-    children: PropTypes.node.isRequired
-}
-
-class Header extends Component {
-
-    constructor() {
-        super();
-        this.state = {
-            modalIsOpen: false,
-            value: 0,
-            loginContactNoRequired: 'dspNone',
-            loginContactNoRequiredMsg: 'required',
-            loginContactNo: '',
-            loginPasswordRequired: 'dspNone',
-            loginPasswordRequiredMsg: 'required',
-            loginPassword: '',
-            firstNameRequired: 'dspNone',
-            firstName: '',
-            lastName: '',
-            emailRequired: 'dspNone',
-            emailRequiredMsg: 'required',
-            email: '',
-            signupPasswordRequired: 'dspNone',
-            signupPasswordRequiredMsg: 'required',
-            signupPassword: '',
-            signupContactNoRequired: 'dspNone',
-            signupContactNoRequiredMsg: 'required',
-            signupContactNo: '',
-            signupSuccess: false,
-            loggedIn: sessionStorage.getItem('access-token') == null ? false : true,
-            userFirstName: '',
-            openLoginSuccessMsg: false,
-            openSignupSuccessMsg: false,
-            anchorEl: null
-        }
+    [theme.breakpoints.down('sm')]:{
+      flexDirection:'column',
+      justifyContent:'space-between',
+      alignItems:'flex-start',
+    },
+    [theme.breakpoints.up('md')]:{
+      flexDirection:'row',
+      justifyContent:'space-between',
+      alignItems:'center',
+    },
+    [theme.breakpoints.up('lg')]:{
+      flexDirection:'row',
+      justifyContent:'space-between',
+      alignItems:'center',
+    },
+    [theme.breakpoints.up('xl')]:{
+      flexDirection:'row',
+      justifyContent:'space-between',
+      alignItems:'center',
+    },
+  },
+  search: {
+    position: 'relative',
+    borderRadius: '4px',
+    backgroundColor: '#263238',
+    marginLeft: 0,
+    width:null
+  },
+  inputInput: {
+    color:'#ffffff',
+    width:220
+  },
+  icon: {
+    fontSize:20,
+    marginRight:10
+  },
+  iconBig:{
+    fontSize:30,
+    marginRight:10,
+    color:'white'
+  },
+  appHeader:{
+    backgroundColor:'#263238'
+  },
+  button: {
+    height:30
+  },
+  customUnderline:{
+    '&:before':{
+      borderBottom:'1px solid black'
+    },
+    '&:after':{
+      borderBottom:'2px solid white'
     }
+  },
+})
 
-    openLoginModalHandler = () => {
+class Header extends Component{
+
+  constructor(props){
+    super(props);
+    this.state = {
+      anchorEl: null,
+      isOpenModel: false,
+      value: 0,
+      username: "",
+      usernameTintVisible: "dispNone",
+      password: "",
+      passwordTintVisisble: "dispNone",
+      firstname: "",
+      firstnameRequired: "dispNone",
+      lastname: "",
+      lastnameRequired: "dispNone",
+      email: "",
+      emailRequired: "dispNone",
+      emailErrorMsg:"",
+      registerPassword: "",
+      registerPasswordRequired: "dispNone",
+      registerPasswordErrorMsg:"",
+      contact: "",
+      contactRequired: "dispNone",
+      contactErrorMsg:"",
+      signupFailMsg:"",
+      signupFailMsgRequired:"dispNone",
+      isSnackVisible:false,
+      snackMsg:"",
+      loginFailMsgRequired:"dispNone",
+      loginFailMsg:"",
+      userNameErrorMsg:"",
+      name:"",
+      typing:false,
+      typingTimeout:0,
+      showSearch: props.showSearch,
+    };
+  }
+
+  showModal = () =>{
+    this.setState({isOpenModel: true});
+  }
+
+  closeModel = () => {
+    this.setState({isOpenModel: false, usernameTintVisible: "dispNone", passwordTintVisisble: "dispNone", value: 0});
+  }
+
+  handleChange = (event, value) => {
+    this.setState({value: value});
+  }
+
+  loginClickHandler = () => {
+    let validated = true;
+
+    if (this.state.username === "") {
+      this.setState({
+        userNameErrorMsg:"required",
+        usernameTintVisible: "dispBlock"
+      })
+      validated = false;
+    }else {
+      if (!this.validateContactNo(this.state.username)) {
         this.setState({
-            modalIsOpen: true,
-            value: 0,
-            loginContactNoRequired: 'dspNone',
-            loginContactNoRequiredMsg: 'required',
-            loginContactNo: '',
-            loginPasswordRequired: 'dspNone',
-            loginPasswordRequiredMsg: 'required',
-            loginPassword: '',
-            firstNameRequired: 'dspNone',
-            firstName: '',
-            lastName: '',
-            emailRequired: 'dspNone',
-            emailRequiredMsg: 'required',
-            email: '',
-            signupPasswordRequired: 'dspNone',
-            signupPasswordRequiredMsg: 'required',
-            signupPassword: '',
-            signupContactNoRequired: 'dspNone',
-            signupContactNoRequiredMsg: 'required',
-            signupContactNo: '',
-        });
-    }
-
-    closeLoginModalHandler = () => {
-        this.setState({modalIsOpen: false});
-    }
-
-    loginModalTabChangeHandler = (event, value) => {
-        this.setState({value});
-    }
-
-    inputLoginContactNoChangeHandler = (event) => {
-        this.setState({loginContactNo: event.target.value});
-    }
-
-    inputLoginPasswordChangeHandler = (event) => {
-        this.setState({loginPassword: event.target.value});
-    }
-
-    loginClickHandler = () => {
-        let contactReq = false;
-        if (this.state.loginContactNo === '') {
-            this.setState({
-                loginContactNoRequired: 'dspBlock',
-                loginContactNoRequiredMsg: 'required'
-            });
-            contactReq = true;
-        } else {
-            this.setState({loginContactNoRequired: 'dspNone'});
-        }
-
-        let passwordReq = false;
-        if (this.state.loginPassword === '') {
-            this.setState({
-                loginPasswordRequired: 'dspBlock',
-                loginPasswordRequiredMsg: 'required'
-            });
-            passwordReq = true;
-        } else {
-            this.setState({loginPasswordRequired: 'dspNone'});
-        }
-
-        let validateContact = new RegExp('^[0][1-9]{9}$|^[1-9]{9}');
-        if (contactReq === false && validateContact.test(this.state.loginContactNo) === false) {
-            this.setState({
-                loginContactNoRequired: 'dspBlock',
-                loginContactNoRequiredMsg: 'Invalid Contact',
-            });
-            return;
-        }
-
-        if (contactReq || passwordReq) {
-            return;
-        }
-
-        let dataLogin = null;
-        let xhrLogin = new XMLHttpRequest();
-        let that = this;
-        xhrLogin.addEventListener('readystatechange', function() {
-            if (this.readyState === 4) {
-                let responseText = JSON.parse(this.responseText);
-                console.log(responseText);
-                if (responseText.code === 'ATH-001' || responseText.code === 'ATH-002') {
-                    that.setState({
-                        loginPasswordRequired: 'dspBlock',
-                        loginPasswordRequiredMsg: responseText.message,
-                    });
-                    return;
-                }
-
-                sessionStorage.setItem('user-uuid', responseText.id);
-                sessionStorage.setItem('access-token', xhrLogin.getResponseHeader('access-token'));
-                sessionStorage.setItem('user-first-name', responseText.first_name);
-
-                that.setState({
-                    loggedIn: true,
-                    userFirstName: responseText.first_name,
-                    openLoginSuccessMsg: true,
-                });
-
-                that.closeLoginModalHandler();
-            }
-        });
-
-        //xhrLogin.open('POST', 'http://localhost:8080/api/customer/login');
-        //xhrLogin.setRequestHeader('authorization', 'Basic ' + window.btoa(this.state.loginContactNo + ':' + this.state.loginPassword));
-        //xhrLogin.setRequestHeader('Content-Type', 'application/json');
-        //xhrLogin.send(dataLogin);
-    }
-
-    inputFirstNameChangeHandler = (event) => {
-        console.log(event.target.value);
-        this.setState({firstName: event.target.value});
-    }
-
-    inputLastNameChangeHandler = (event) => {
-        this.setState({lastName: event.target.value});
-    }
-
-    inputEmailChangeHandler = (event) => {
-        this.setState({email: event.target.value});
-    }
-
-    inputSignupPasswordChangeHandler = (event) => {
-        this.setState({signupPassword: event.target.value});
-    }
-
-    inputSignupContactNoChangeHandler = (event) => {
-        this.setState({signupContactNo: event.target.value});
-    }
-
-    singupClickHandler = () => {
-
-        let firstNameReq = false
-        if (this.state.firstName === '') {
-            this.setState({firstNameRequired: 'dspBlock'});
-            firstNameReq = true;
-        } else {
-            this.setState({firstNameRequired: 'dspNone'});
-        }
-
-        let emailReq = false;
-        if (this.state.email === '') {
-            this.setState({
-                emailRequired: 'dspBlock',
-                emailRequiredMsg: 'required'
-            });
-            emailReq = true;
-        } else {
-            this.setState({emailRequired: 'dspNone'});
-        }
-
-        let passwordReq = false;
-        if (this.state.signupPassword === '') {
-            this.setState({
-                signupPasswordRequired: 'dspBlock',
-                signupPasswordRequiredMsg: 'required'
-            });
-            passwordReq = true;
-        } else {
-            this.setState({signupPasswordRequired: 'dspNone'});
-        }
-
-        let contactNoReq = false;
-        if (this.state.signupContactNo === '') {
-            this.setState({
-                signupContactNoRequired: 'dspBlock',
-                signupContactNoRequiredMsg: 'required'
-            })
-            contactNoReq = true;
-        } else {
-            this.setState({signupContactNoRequired: 'dspNone'});
-        }
-
-        let validateEmail = new RegExp('^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}');
-        if (emailReq === false && validateEmail.test(this.state.email) === false) {
-            this.setState({
-                emailRequired: 'dspBlock',
-                emailRequiredMsg: 'Invalid Email'
-            });
-            return;
-        }
-
-        let validatePassword = new RegExp('^(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[#@$%&*!^-]).{8,}$');
-        if (passwordReq === false && validatePassword.test(this.state.signupPassword) === false) {
-            this.setState({
-                signupPasswordRequired: 'dspBlock',
-                signupPasswordRequiredMsg: 'Password must contain at least one capital letter, one small letter, one number, and one special character'
-            });
-            return;
-        }
-
-        let validateContact = new RegExp('^[0][1-9]{9}$|^[1-9]{9}');
-        if (contactNoReq === false && validateContact.test(this.state.signupContactNo) === false) {
-            this.setState({
-                signupContactNoRequired: 'dspBlock',
-                signupContactNoRequiredMsg: 'Contact No. must contain only numbers and must be 10 digits long'
-            });
-            return;
-        }
-
-        if (firstNameReq || emailReq || passwordReq || contactNoReq) {
-            return;
-        }
-
-        let dataSignup = {
-            'first_name': this.state.firstName,
-            'last_name': this.state.lastName,
-            'email_address': this.state.email,
-            'password': this.state.signupPassword,
-            'contact_number': this.state.signupContactNo,
-        };
-        let xhrSignup = new XMLHttpRequest();
-        let that = this;
-        xhrSignup.addEventListener('readystatechange', function() {
-            if (this.readyState === 4) {
-                let responseText = JSON.parse(this.responseText);
-                console.log(responseText);
-                if (responseText.code === 'SGR-001') {
-                    that.setState({
-                        signupContactNoRequired: 'dspBlock',
-                        signupContactNoRequiredMsg: responseText.message
-                    });
-                    return;
-                }
-
-                that.setState({
-                    value: 0,
-                    openSignupSuccessMsg: true,
-                });
-            }
+          userNameErrorMsg:"Invalid Contact",
+          usernameTintVisible: "dispBlock"
         })
-        //xhrSignup.open('POST', 'http://localhost:8080/api/customer/signup');
-        //xhrSignup.setRequestHeader('Content-Type', 'application/json');
-        //console.log(JSON.stringify(dataSignup));
-        //xhrSignup.send(JSON.stringify(dataSignup));
+        validated = false;;
+      }else {
+        this.setState({usernameTintVisible: "dispNone"})
+      }
     }
 
-    loginSuccessMsgOnCloseHandler = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
+    if (this.state.password === "") {
+      this.setState({passwordTintVisisble: "dispBlock"})
+      validated = false;;
+    }else {
+      this.setState({passwordTintVisisble: "dispNone"})
+    }
+    if (validated) {
+      this.doLoginApiCall();
+    }
+  }
 
-        this.setState({openLoginSuccessMsg: false});
+  doLoginApiCall = () =>{
+    let that = this;
+    let username = this.state.username;
+    let password = this.state.password;
+    let code=base64.encode(username+':'+password);
+    console.log('code', code);
+    let url = 'http://localhost:8080/api/customer/login';
+   
+    return fetch(url,{
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'authorization': `Basic ${code}`, 
+      },
+    }).then((response) =>{
+    console.log('hiiiiii',this.response);
+      console.log('response headers', response.headers.get("access-token"));
+      // console.log('response', response);
+      if (response.ok) {
+        that.loginSuccess(response)
+        sessionStorage.setItem("accessToken",response.headers.get("access-token"));
+        return response.json();
+      }else {
+        that.loginFail();
+      }
+      return response.text();
+    }).then((msg)=>{
+      // console.log('message',msg);
+      
+      that.setState({
+        loginFailMsg:msg
+      });
+    }).catch((error) => {
+      console.log('error login data',error);
+    });
+  }
+
+  loginSuccess = (response) =>{
+    this.closeModel();
+    this.showSncakBar();
+    console.log('RE',response);
+    this.setState({
+      snackMsg:"Logged in successfully!",
+      loginFailMsgRequired:"dispNone"
+    })
+    sessionStorage.setItem("loggedIn", true);
+    sessionStorage.setItem("username","Upgrad");
+  }
+
+  loginFail = () => {
+    this.setState({
+      loginFailMsgRequired:"dispBlock"
+    })
+  }
+
+  usernameChangeHandler = (e) => {
+    this.setState({
+      username: e.target.value,
+      usernameTintVisible: "dispNone"
+    });
+  }
+
+  passwordChangeHandler = (e) => {
+    this.setState({
+      password: e.target.value,
+      passwordTintVisisble:"dispNone"
+    });
+  }
+
+  firstnameChangeHandler = (e) => {
+    this.setState({
+      firstname: e.target.value,
+      firstnameRequired:"dispNone"
+    });
+  }
+
+  lastnameChangeHandler = (e) => {
+    this.setState({
+      lastname: e.target.value,
+      lastnameRequired:"dispNone"
+    });
+  }
+
+  emailChangeHandler = (e) => {
+    this.setState({
+      email: e.target.value,
+      emailRequired:"dispNone"
+    });
+  }
+
+  registerPasswordChangeHandler = (e) => {
+    this.setState({
+      registerPassword: e.target.value,
+      registerPasswordRequired:"dispNone"
+    });
+  }
+
+  contactChangeHandler = (e) => {
+    this.setState({
+      contact: e.target.value,
+      contactRequired:"dispNone"
+    });
+  }
+
+  registerClickHandler = () => {
+    let validated = true;
+    if (this.state.firstname === "") {
+      this.setState({firstnameRequired: "dispBlock"});
+      validated = false;
+    }else {
+      this.setState({firstnameRequired: "dispNone"})
     }
 
-    signupSuccessMsgOnCloseHandler = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
-
-        this.setState({openSignupSuccessMsg: false});
-    }
-
-    userMenuOnClickHandler = event => {
-        this.setState({ anchorEl: event.currentTarget });
-    }
-
-    userMenuOnCloseHandler = () => {
-        this.setState({ anchorEl: null });
-    }
-
-    myProfileOnClickHandler = () => {
-        this.setState({ anchorEl: null });
-    }
-
-    logoutOnClickHandler = () => {
-        sessionStorage.removeItem('user-uuid');
-        sessionStorage.removeItem('access-token');
+    if (this.state.email === "") {
+      this.setState({
+        emailRequired: "dispBlock",
+        emailErrorMsg:"required"
+      })
+      validated = false;
+    }else {
+      if (!this.validateEmail(this.state.email)) {
         this.setState({
-            anchorEl: null,
-            loggedIn: false
-        });
+          emailRequired:"dispBlock",
+          emailErrorMsg:"Invalid Email"
+        })
+        validated = false;
+      }else {
+        this.setState({emailRequired: "dispNone"})
+      }
     }
 
-
-    render() {
-        const { classes } = this.props;
-        const { anchorEl } = this.state;
-        return (
-            <div>
-
-                <header className='app-header'>
-
-                    {/* header app logo */}
-                    <div className='app-logo'>
-                        <FastFoodIcon id='fast-food-icon' fontSize='large' />
-                    </div>
-
-                    {/* header search box */}
-                    <div className='search-box'>
-                        <Input
-                            id='search-box-input'
-                            classes={{
-                                underline: classes.searchUnderline,
-                            }}
-                            type='text'
-                            placeholder='Search by Restaurant Name'
-                            startAdornment={
-                                <InputAdornment position='start'>
-                                    <SearchIcon id='search-box-icon' />
-                                </InputAdornment>
-                            }
-                        />
-                    </div>
-
-                    {/* header app login */}
-                    {!this.state.loggedIn ?
-                            <div className='app-login'>
-                                <Button
-                                    id='login-btn'
-                                    size='medium'
-                                    variant='contained'
-                                    color='default'
-                                    onClick={this.openLoginModalHandler}
-                                >
-                                    <AccountCircleIcon id='login-btn-icon' />
-                                    LOGIN
-                                </Button>
-                            </div>
-                            :
-                            <div className='app-login'>
-                                <Button
-                                    id='login-btn'
-                                    size='medium'
-                                    aria-owns={anchorEl ? 'simple-menu' : undefined}
-                                    aria-haspopup='true'
-                                    onClick={this.userMenuOnClickHandler}
-                                >
-                                    <AccountCircleIcon id='login-btn-icon' />
-                                    {sessionStorage.getItem('user-first-name')}
-                                </Button>
-                                <Menu
-                                    id='user-menu'
-                                    anchorEl={anchorEl}
-                                    open={Boolean(anchorEl)}
-                                    onClose={this.userMenuOnCloseHandler}
-                                >
-                                      <MenuItem onClick={this.myProfileOnClickHandler}>
-                                        <Link to='/profile' style={{ textDecoration: 'none' }}>
-                                            My Profile
-                                        </Link>
-                                    </MenuItem>
-                                    <MenuItem onClick={this.logoutOnClickHandler}>Logout</MenuItem>
-                                </Menu>
-                            </div>
-                        }
-
-                </header>
-
-                <Modal
-                    ariaHideApp={false}
-                    isOpen={this.state.modalIsOpen}
-                    contentLabel='Login'
-                    onRequestClose={this.closeLoginModalHandler}
-                    style={loginModalStyle}
-                >
-                    <Tabs className='login-signup-tabs' value={this.state.value} onChange={this.loginModalTabChangeHandler}>
-                        <Tab label='LOGIN' />
-                        <Tab label='SIGNUP' />
-                    </Tabs>
-                    {/* login tab */}
-                    {this.state.value === 0 &&
-                        <TabContainer>
-                            <FormControl required>
-                                <InputLabel htmlFor='loginContactNo'>Contact No.</InputLabel>
-                                <Input
-                                    id='loginContactNo'
-                                    type='text'
-                                    logincontactno={this.state.loginContactNo}
-                                    value={this.state.loginContactNo}
-                                    onChange={this.inputLoginContactNoChangeHandler}
-                                />
-                                <FormHelperText className={this.state.loginContactNoRequired} error={true}>
-                                    <span>{this.state.loginContactNoRequiredMsg}</span>
-                                </FormHelperText>
-                            </FormControl>
-                            <br /><br />
-                            {/* form is used to overcome - [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) */}
-                            <form>
-                                <FormControl required>
-                                    <InputLabel htmlFor='loginPassword'>Password</InputLabel>
-                                    <Input
-                                        id='loginPassword'
-                                        type='password'
-                                        loginpassword={this.state.loginPassword}
-                                        value={this.state.loginPassword}
-                                        onChange={this.inputLoginPasswordChangeHandler}
-                                    />
-                                    <FormHelperText className={this.state.loginPasswordRequired} error={true}>
-                                        <span>{this.state.loginPasswordRequiredMsg}</span>
-                                    </FormHelperText>
-                                </FormControl>
-                            </form>
-                            <br /><br />
-                            <Button id='modal-login-btn' variant='contained' color='primary' onClick={this.loginClickHandler}>LOGIN</Button>
-                        </TabContainer>
-                    }
-
-                    {/* signup tab  */}
-                    {this.state.value === 1 &&
-                        <TabContainer>
-                            <FormControl required>
-                                <InputLabel htmlFor='firstName'>First Name</InputLabel>
-                                <Input
-                                    id='firstName'
-                                    type='text'
-                                    firstname={this.state.firstName}
-                                    value={this.state.firstName}
-                                    onChange={this.inputFirstNameChangeHandler}
-                                />
-                                <FormHelperText className={this.state.firstNameRequired} error={true}>
-                                    <span>required</span>
-                                </FormHelperText>
-                            </FormControl>
-                            <br /><br />
-                            <FormControl>
-                                <InputLabel htmlFor='lastName'>Last Name</InputLabel>
-                                <Input
-                                    id='lastName'
-                                    type='text'
-                                    lastname={this.state.lastName}
-                                    value={this.state.lastName}
-                                    onChange={this.inputLastNameChangeHandler}
-                                />
-                            </FormControl>
-                            <br /><br />
-                            <FormControl required>
-                                <InputLabel htmlFor='email'>Email</InputLabel>
-                                <Input
-                                    id='email'
-                                    type='text'
-                                    email={this.state.email}
-                                    value={this.state.email}
-                                    onChange={this.inputEmailChangeHandler}
-                                />
-                                <FormHelperText className={this.state.emailRequired} error={true}>
-                                    <span>{this.state.emailRequiredMsg}</span>
-                                </FormHelperText>
-                            </FormControl>
-                            <br /><br />
-                            {/* form is used to overcome - [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) */}
-                            <form>
-                                <FormControl required>
-                                    <InputLabel htmlFor='signupPassword'>Password</InputLabel>
-                                    <Input
-                                        id='signupPassword'
-                                        type='password'
-                                        signuppassword={this.state.signupPassword}
-                                        value={this.state.signupPassword}
-                                        onChange={this.inputSignupPasswordChangeHandler}
-                                    />
-                                    <FormHelperText className={this.state.signupPasswordRequired} error={true}>
-                                        <span>{this.state.signupPasswordRequiredMsg}</span>
-                                    </FormHelperText>
-                                </FormControl>
-                            </form>
-                            <br />
-                            <FormControl required>
-                                <InputLabel htmlFor='signupContactNo'>Contact No</InputLabel>
-                                <Input
-                                    id='signupContactNo'
-                                    type='text'
-                                    signupcontactno={this.state.signupContactNo}
-                                    value={this.state.signupContactNo}
-                                    onChange={this.inputSignupContactNoChangeHandler}
-                                />
-                                <FormHelperText className={this.state.signupContactNoRequired} error={true}>
-                                    <span>{this.state.signupContactNoRequiredMsg}</span>
-                                </FormHelperText>
-                            </FormControl>
-                            <br /><br />
-                            <Button id='modal-signup-btn' variant='contained' color='primary' onClick={this.singupClickHandler}>SIGNUP</Button>
-                        </TabContainer>
-                    }
-                </Modal>
-                {/* login snackbar */}
-                <Snackbar
-                    anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'left',
-                    }}
-                    open={this.state.openLoginSuccessMsg}
-                    autoHideDuration={4000}
-                    onClose={this.loginSuccessMsgOnCloseHandler}
-                    ContentProps={{
-                        'aria-describedby': 'message-id',
-                    }}
-                    message={<span id='message-id'>Logged in successfully!</span>}
-                />
-                {/* signup snackbar */}
-                <Snackbar
-                    anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'left',
-                    }}
-                    open={this.state.openSignupSuccessMsg}
-                    autoHideDuration={4000}
-                    onClose={this.signupSuccessMsgOnCloseHandler}
-                    ContentProps={{
-                        'aria-describedby': 'message-id',
-                    }}
-                    message={<span id='message-id'>Registered successfully! Please login now!</span>}
-                />
-
-            </div>
-        )
+    if (this.state.registerPassword === "") {
+      this.setState({
+        registerPasswordRequired: "dispBlock",
+        registerPasswordErrorMsg:"required"
+      })
+      validated = false;
+    }else {
+      if (!this.validatePassword(this.state.registerPassword)) {
+        this.setState({
+          registerPasswordRequired: "dispBlock",
+          registerPasswordErrorMsg:"Password must contain at least one capital letter, one small letter, one number, and one special character"
+        })
+        validated = false;
+      }else {
+        this.setState({registerPasswordRequired: "dispNone"})
+      }
     }
+
+    if (this.state.contact === "") {
+      this.setState({
+        contactRequired: "dispBlock",
+        contactErrorMsg:"required"
+      })
+      validated = false;
+    }else {
+      if (!this.validateContactNo(this.state.contact)) {
+        this.setState({
+          contactRequired: "dispBlock",
+          contactErrorMsg:"Contact No. must contain only numbers and must be 10 digits long"
+        })
+        validated = false;
+      }else {
+        this.setState({
+          contactRequired: "dispNone"
+        })
+      }
+    }
+    if (validated) {
+      this.doRegisterApiCall();
+    }
+  }
+
+  doRegisterApiCall = () => {
+    let that = this;
+    let firstName = this.state.firstname;
+    let lastname = this.state.lastname;
+    let email = this.state.email;
+    let contactNumber = this.state.contact;
+    let password = this.state.registerPassword;
+    let url = `http://localhost:8080/api/customer/signup`;
+    const data = {
+      "contact_number": contactNumber,
+      "email_address": email,
+      "first_name": firstName,
+      "last_name": lastname,
+      "password": password,
+    };
+    return fetch(url,{
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data),
+    }).then((response) =>{
+      if (response.ok) {
+        that.signUpSuccess();
+      }else {
+        that.signUpFail();
+      }
+      return response.text();
+    }).then((msg)=>{
+      that.setState({
+        signupFailMsg:msg
+      });
+    }).catch((error) => {
+      console.log('error register data',error);
+    });
+  }
+
+  signUpSuccess = () => {
+    this.setState({
+      value:0,
+      signupFailMsgRequired:"dispNone",
+      snackMsg:"Registered successfully! Please login now!"
+    });
+    this.showSncakBar();
+  }
+
+  signUpFail = () => {
+    this.setState({
+      signupFailMsgRequired:"dispBlock"
+    });
+  }
+
+  validateEmail = (email) => {
+    var re = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
+    return re.test(email);
+  }
+
+  validatePassword = (password) => {
+    var re = /^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+    return re.test(password);
+  }
+
+  validateContactNo = (number) => {
+    var re = /^\d{10}$/;
+    return re.test(number);
+  }
+
+  //Using timeout to fire the api when user stops typing
+  onSearchEntered = (e) => {
+    let that = this;
+    if (this.state.typingTimeout) {
+      clearTimeout(this.state.typingTimeout);
+    }
+
+    this.setState({
+      name:e.target.value,
+      typing:false,
+      typingTimeout:setTimeout(function(){
+        that.props.searchHandler(that.state.name);
+      },500)
+    
+    })
+  }
+
+  render(){
+    const {classes,screen} = this.props;
+    let isUserLoggedIn = sessionStorage.getItem("loggedIn");
+    return (
+        <div>
+          <AppBar className={classes.appHeader}>
+            <Toolbar className={classes.toolbar}>
+              <FastFoodIcon/>
+              {screen === "Home" &&
+                <div className={classes.search}>
+                  <Input
+                    id="input-with-icon-adornment"
+                    classes={{input: classes.inputInput, underline:classes.customUnderline}}
+                    placeholder="Search by Restaurant Name"
+                    onChange={this.onSearchEntered}
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <SearchIcon style={{color:"white"}}/>
+                      </InputAdornment>
+                    }
+                  />
+                </div>
+              }
+              {!isUserLoggedIn &&
+                <Button variant="contained" className={classes.button} color="default" onClick={this.showModal}>
+                  <AccountCircle  className={classes.icon}/>
+                  Login
+                </Button>
+              }
+              {isUserLoggedIn &&
+                <div>
+                  <IconButton onClick={this.handleClick}>
+                    <AccountCircle className={classes.iconBig}/>
+                    <span style={{color:"white",fontSize:14}}>{sessionStorage.getItem("username")}</span>
+                  </IconButton>
+                  <Popover
+                    id="simple-menu"
+                    anchorEl={this.state.anchorEl}
+                    open={Boolean(this.state.anchorEl)}
+                    onClose={this.handleClose}
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: 'left',
+                    }}
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'left',
+                    }}>
+                      <div style={{padding:'5px' , textAlign:'center'}}>
+                        <MenuItem onClick={this.handleAccount}><a style={{ textDecoration: 'none', color: 'black'}} href="/profile">My Profile</a></MenuItem>
+                        <MenuItem onClick={this.handleLogout}>
+                          <a style={{ textDecoration: 'none', color: 'black'}}  href="/">Logout</a>
+                        </MenuItem>
+                      </div>
+                  </Popover>
+                </div>
+              }
+              <Modal isOpen={this.state.isOpenModel} onRequestClose={this.closeModel} ariaHideApp={false} contentLabel="login" shouldCloseOnOverlayClick={false} style={customStyles}>
+                <Tabs className="tabs" value={this.state.value} onChange={this.handleChange}>
+                  <Tab label="Login"/>
+                  <Tab label="Signup"/>
+                </Tabs>
+                {
+                  this.state.value === 0 &&
+                  <TabContainer>
+                    <div className={classes.tabContainer}>
+                      <FormControl>
+                        <InputLabel htmlFor="username">Contact No. *</InputLabel>
+                        <Input id="username" type="text" username={this.state.username} onChange={this.usernameChangeHandler}/>
+                        <FormHelperText className={this.state.usernameTintVisible}>
+                          <span className="red">{this.state.userNameErrorMsg}</span>
+                        </FormHelperText>
+                      </FormControl><br/><br/>
+                      <FormControl>
+                        <InputLabel htmlFor="password">Password *</InputLabel>
+                        <Input id="password" type="password" password={this.state.password} onChange={this.passwordChangeHandler}/>
+                        <FormHelperText className={this.state.passwordTintVisisble}>
+                          <span className="red">required</span>
+                        </FormHelperText>
+                      </FormControl><br/><br/>
+                      <div className={this.state.loginFailMsgRequired}><span className="red">Invalid Credentials</span></div>
+                      <br/>
+                      <Button onClick={this.loginClickHandler} variant="contained" color="primary">Login</Button>
+                      
+                      </div>
+                    </TabContainer>
+                }
+                {
+                  this.state.value === 1 &&
+                  <TabContainer>
+                    <div className={classes.tabContainer}>
+                      <FormControl>
+                        <InputLabel htmlFor="firstname">First Name*</InputLabel>
+                        <Input id="firstname" type="text" username={this.state.firstname} onChange={this.firstnameChangeHandler}/>
+                        <FormHelperText className={this.state.firstnameRequired}>
+                          <span className="red">required</span>
+                        </FormHelperText>
+                      </FormControl><br/><br/>
+                      <FormControl>
+                        <InputLabel htmlFor="Lastname">Last Name</InputLabel>
+                        <Input id="lastname" type="text" username={this.state.lastname} onChange={this.lastnameChangeHandler}/>
+                        <FormHelperText className={this.state.lastnameRequired}>
+                          <span className="red">required</span>
+                        </FormHelperText>
+                      </FormControl><br/><br/>
+                      <FormControl>
+                        <InputLabel htmlFor="email">Email*</InputLabel>
+                        <Input id="email" type="email" username={this.state.email} onChange={this.emailChangeHandler}/>
+                        <FormHelperText className={this.state.emailRequired}>
+                          <span className="red">{this.state.emailErrorMsg}</span>
+                        </FormHelperText>
+                      </FormControl><br/><br/>
+                      <FormControl>
+                        <InputLabel htmlFor="register_password">Password*</InputLabel>
+                        <Input id="register_password" type="password" username={this.state.registerPassword} onChange={this.registerPasswordChangeHandler}/>
+                        <FormHelperText className={this.state.registerPasswordRequired}>
+                          <span className="red">{this.state.registerPasswordErrorMsg}</span>
+                        </FormHelperText>
+                      </FormControl><br/><br/>
+                      <FormControl>
+                        <InputLabel htmlFor="contact">Contact*</InputLabel>
+                        <Input id="contact" type="tel" username={this.state.contact} onChange={this.contactChangeHandler}/>
+                        <FormHelperText className={this.state.contactRequired}>
+                          <span className="red">{this.state.contactErrorMsg}</span>
+                        </FormHelperText>
+                      </FormControl><br/><br/>
+                      <Button onClick={this.registerClickHandler} variant="contained" color="primary">Signup</Button>
+                      <div className={this.state.signupFailMsgRequired}><span className="red">{this.state.signupFailMsg}</span></div>
+                    </div>
+                    </TabContainer>
+                }
+              </Modal>
+          </Toolbar>
+        </AppBar>
+        <Snackbar
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
+          open={this.state.isSnackVisible}
+          onClose={this.hideSnackBar}
+          autoHideDuration={5000}
+          message={<span>{this.state.snackMsg}</span>}/>
+    </div>)
+  }
+
+  showSncakBar = () => {
+    this.setState({
+      isSnackVisible:true,
+    });
+  }
+
+  hideSnackBar = () =>{
+    this.setState({
+      isSnackVisible:false
+    });
+  }
+
+  handleClick = (event) =>{
+    this.setState({
+      anchorEl: event.currentTarget
+    })
+  }
+
+  handleAccount = ()=>{
+    // this.props.handleAccount();
+    console.log('this.props', this.props);
+    this.handleClose();
+  }
+
+  handleLogout = ()=>{
+    // this.doLogoutApiCall();
+    sessionStorage.clear();
+    this.handleClose();
+    console.log('props', this.props);
+  }
+
+
+  handleClose = () =>{
+    this.setState({ anchorEl: null });
+  }
 }
 
-export default withStyles(styles)(Header);
+export default withStyles(styles)(Header)
